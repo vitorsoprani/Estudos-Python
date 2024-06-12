@@ -12,6 +12,7 @@ Estrutura básica de desenvolvimento usando pygame:
         Logica
         Atualiza a janela (desenha)
         Set FPS
+        teste
 """
 
 #Import
