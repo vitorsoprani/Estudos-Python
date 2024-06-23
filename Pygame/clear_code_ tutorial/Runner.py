@@ -1,6 +1,12 @@
 import pygame
 from sys import exit
 
+def display_score():
+    current_time = int(pygame.time.get_ticks()/1000 - start_time)
+    score_surf = test_font.render(f'Score: {current_time}', False, (64, 64, 64))
+    score_rect = score_surf.get_rect(center = (400, 50))
+    screen.blit(score_surf, score_rect)
+
 pygame.init()
 
 screen = pygame.display.set_mode((800, 400))
@@ -8,7 +14,9 @@ pygame.display.set_caption("Runner")
 
 clock = pygame.time.Clock()
 
-game_active = True
+game_active = False
+
+start_time = 0
 
 test_font = pygame.font.Font('./font/Pixeltype.ttf', 50)
 
@@ -24,6 +32,10 @@ snail_rect = snail_surf.get_rect(midbottom=(600, 300))
 player_surf = pygame.image.load('./graphics/Player/player_walk_1.png').convert_alpha()
 player_rect = player_surf.get_rect(midbottom=(80, 300))
 player_gravity = 0
+
+# intro:
+player_stand = pygame.image.load('./graphics/Player/player_stand.png').convert_alpha()
+player_stand_rect = player_stand.get_rect(center = (400, 200))
 
 while True:
     for event in pygame.event.get():
@@ -43,18 +55,20 @@ while True:
                 if event.key == pygame.K_SPACE:
                     game_active = True
                     snail_rect.left = 800
+                    start_time = int(pygame.time.get_ticks()/1000)
 
     if game_active:
         screen.blit(sky_surf, (0, 0))
         screen.blit(ground_surf, (0, 300))
-        pygame.draw.rect(screen,
-                        '#c0e8ec',
-                        pygame.Rect(score_rect.left - 5,
-                                    score_rect.top - 5,
-                                    score_rect.width + 10,
-                                    score_rect.height + 10),
-                        border_radius=3)    
-        screen.blit(score_surf, score_rect)
+        # pygame.draw.rect(screen,
+        #                 '#c0e8ec',
+        #                 pygame.Rect(score_rect.left - 5,
+        #                             score_rect.top - 5,
+        #                             score_rect.width + 10,
+        #                             score_rect.height + 10),
+        #                 border_radius=3)    
+        # screen.blit(score_surf, score_rect)
+        display_score()
 
         snail_rect.x -= 4
         if snail_rect.right < 0:
@@ -72,7 +86,9 @@ while True:
         if snail_rect.colliderect(player_rect):
             game_active = False
     else:
-        screen.fill('Yellow')
+        screen.fill((94, 129, 162))
+        screen.blit(player_stand, player_stand_rect)
+
 
     pygame.display.update()
     clock.tick(60)
