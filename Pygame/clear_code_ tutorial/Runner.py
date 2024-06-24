@@ -6,6 +6,7 @@ def display_score():
     score_surf = test_font.render(f'Score: {current_time}', False, (64, 64, 64))
     score_rect = score_surf.get_rect(center = (400, 50))
     screen.blit(score_surf, score_rect)
+    return current_time
 
 pygame.init()
 
@@ -23,9 +24,6 @@ test_font = pygame.font.Font('./font/Pixeltype.ttf', 50)
 sky_surf = pygame.image.load('./graphics/Sky.png').convert()
 ground_surf = pygame.image.load('./graphics/ground.png').convert()
 
-score_surf = test_font.render('My game', False, (64, 64, 64))
-score_rect = score_surf.get_rect(center=(400, 50))
-
 snail_surf = pygame.image.load('./graphics/snail/snail1.png').convert_alpha()
 snail_rect = snail_surf.get_rect(midbottom=(600, 300))
 
@@ -35,7 +33,15 @@ player_gravity = 0
 
 # intro:
 player_stand = pygame.image.load('./graphics/Player/player_stand.png').convert_alpha()
+player_stand = pygame.transform.rotozoom(player_stand, 0, 2)
 player_stand_rect = player_stand.get_rect(center = (400, 200))
+
+last_score = 0
+message_surf = test_font.render('Press space to start...', False, (111, 196, 169))
+message_rect = message_surf.get_rect(center = (400, 350))
+
+title = test_font.render("Pixel Runner", False, (111, 196, 169))
+title_rect = title.get_rect(center = (400, 50))
 
 while True:
     for event in pygame.event.get():
@@ -68,7 +74,7 @@ while True:
         #                             score_rect.height + 10),
         #                 border_radius=3)    
         # screen.blit(score_surf, score_rect)
-        display_score()
+        last_score = display_score()
 
         snail_rect.x -= 4
         if snail_rect.right < 0:
@@ -88,6 +94,17 @@ while True:
     else:
         screen.fill((94, 129, 162))
         screen.blit(player_stand, player_stand_rect)
+
+        last_score_surf = test_font.render(f'Last score: {last_score}', False, (111, 196, 169))
+        last_score_rect = last_score_surf.get_rect(center = (400, 350))
+
+        screen.blit(title, title_rect)
+        
+        if last_score:
+            screen.blit(last_score_surf, last_score_rect)
+        else:
+            screen.blit(message_surf, message_rect)
+
 
 
     pygame.display.update()
