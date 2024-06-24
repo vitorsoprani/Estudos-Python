@@ -1,5 +1,22 @@
 import pygame
 from sys import exit
+from random import randint
+
+def obstacle_movement(obstacle_list):
+    if obstacle_list:
+        for rect in obstacle_list:
+            rect.x -= 5
+
+            if rect.bottom == 300:
+                screen.blit(snail_surf, rect)
+            else:
+                screen.blit(fly_surf, rect)
+        
+        obstacle_list = [obstacle for obstacle in obstacle_list if obstacle.x > -100]
+        
+        return obstacle_list
+    else:
+        return []
 
 def display_score():
     current_time = int(pygame.time.get_ticks()/1000 - start_time)
@@ -7,6 +24,13 @@ def display_score():
     score_rect = score_surf.get_rect(center = (400, 50))
     screen.blit(score_surf, score_rect)
     return current_time
+
+def check_collisions(player, obstacles):
+    if obstacles:
+        for rect in obstacles:
+            if player.colliderect(rect):
+                return False
+    return True
 
 pygame.init()
 
@@ -24,8 +48,12 @@ test_font = pygame.font.Font('./font/Pixeltype.ttf', 50)
 sky_surf = pygame.image.load('./graphics/Sky.png').convert()
 ground_surf = pygame.image.load('./graphics/ground.png').convert()
 
+# obstacles:
 snail_surf = pygame.image.load('./graphics/snail/snail1.png').convert_alpha()
-snail_rect = snail_surf.get_rect(midbottom=(600, 300))
+
+fly_surf = pygame.image.load('./graphics/Fly/Fly1.png').convert_alpha()
+
+obstacle_rect_list = []
 
 player_surf = pygame.image.load('./graphics/Player/player_walk_1.png').convert_alpha()
 player_rect = player_surf.get_rect(midbottom=(80, 300))
@@ -43,6 +71,10 @@ message_rect = message_surf.get_rect(center = (400, 350))
 title = test_font.render("Pixel Runner", False, (111, 196, 169))
 title_rect = title.get_rect(center = (400, 50))
 
+# timer:
+obstacle_timer = pygame.USEREVENT + 1
+pygame.time.set_timer(obstacle_timer, 1500)
+
 while True:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -56,13 +88,19 @@ while True:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE and player_rect.bottom >= 300:
                     player_gravity = -20
+            
+            if event.type == obstacle_timer:
+                if randint(0, 2):
+                    obstacle_rect_list.append(snail_surf.get_rect(bottomright = (randint(900, 1100), 300)))
+                else:
+                    obstacle_rect_list.append(fly_surf.get_rect(bottomright = (randint(900, 1100), 210)))
         else:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     game_active = True
-                    snail_rect.left = 800
                     start_time = int(pygame.time.get_ticks()/1000)
 
+        
     if game_active:
         screen.blit(sky_surf, (0, 0))
         screen.blit(ground_surf, (0, 300))
@@ -76,10 +114,10 @@ while True:
         # screen.blit(score_surf, score_rect)
         last_score = display_score()
 
-        snail_rect.x -= 4
-        if snail_rect.right < 0:
-            snail_rect.left = 800
-        screen.blit(snail_surf, snail_rect)
+        # snail_rect.x -= 4
+        # if snail_rect.right < 0:
+        #     snail_rect.left = 800
+        # screen.blit(snail_surf, snail_rect)
 
         # player
         player_gravity += 1
@@ -88,12 +126,19 @@ while True:
             player_rect.bottom = 300
         screen.blit(player_surf, player_rect)
 
+        # obstacles movement:
+        obstacle_rect_list = obstacle_movement(obstacle_rect_list)
+
         # colisoes:
-        if snail_rect.colliderect(player_rect):
-            game_active = False
+        game_active = check_collisions(player_rect, obstacle_rect_list)
+
     else:
         screen.fill((94, 129, 162))
         screen.blit(player_stand, player_stand_rect)
+
+        obstacle_rect_list.clear()
+        player_rect.bottom = 300
+        player_gravity = 0
 
         last_score_surf = test_font.render(f'Last score: {last_score}', False, (111, 196, 169))
         last_score_rect = last_score_surf.get_rect(center = (400, 350))
@@ -104,7 +149,6 @@ while True:
             screen.blit(last_score_surf, last_score_rect)
         else:
             screen.blit(message_surf, message_rect)
-
 
 
     pygame.display.update()
