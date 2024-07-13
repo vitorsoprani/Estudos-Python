@@ -2,6 +2,42 @@ import pygame
 from sys import exit
 from random import randint
 
+class Player(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        player_walk_1 = pygame.image.load('./graphics/Player/player_walk_1.png').convert_alpha()
+        player_walk_2 = pygame.image.load('./graphics/Player/player_walk_2.png').convert_alpha()
+        self.player_walk = [player_walk_1, player_walk_2]
+        self.player_index = 0
+        self.player_jump = pygame.image.load('./graphics/Player/jump.png').convert_alpha()
+        
+        self.image = self.player_walk[self.player_index]
+        self.rect = self.image.get_rect(midbottom = (200, 300))
+        self.gravity = 0
+
+    def player_input(self):
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_SPACE] and self.rect.bottom >= 300:
+            self.gravity = -20
+    
+    def apply_gravity(self):
+        self.gravity += 1
+        self.rect.y += self.gravity
+        if self.rect.bottom >= 300: self.rect.bottom = 300
+
+    def animation_state(self):
+        if self.rect.bottom < 300:
+            self.image = self.player_jump
+        else:
+            self.player_index += 0.1
+            if self.player_index >= len(self.player_walk): self.player_index = 0
+            self.image = self.player_walk[int(self.player_index)]
+
+    def update(self):
+        self.player_input()
+        self.apply_gravity()
+        self.animation_state()
+
 def obstacle_movement(obstacle_list):
     if obstacle_list:
         for rect in obstacle_list:
@@ -46,17 +82,15 @@ def player_animation():
 
 
 pygame.init()
-
 screen = pygame.display.set_mode((800, 400))
 pygame.display.set_caption("Runner")
-
 clock = pygame.time.Clock()
-
 game_active = False
-
 start_time = 0
-
 test_font = pygame.font.Font('./font/Pixeltype.ttf', 50)
+
+player = pygame.sprite.GroupSingle()
+player.add(Player())
 
 sky_surf = pygame.image.load('./graphics/Sky.png').convert()
 ground_surf = pygame.image.load('./graphics/ground.png').convert()
@@ -84,6 +118,7 @@ player_walk_2 = pygame.image.load('./graphics/Player/player_walk_2.png').convert
 player_walk = [player_walk_1, player_walk_2]
 player_index = 0
 player_jump = pygame.image.load('./graphics/Player/jump.png').convert_alpha()
+
 player_surf = player_walk[player_index]
 player_rect = player_surf.get_rect(midbottom=(80, 300))
 player_gravity = 0
@@ -163,10 +198,12 @@ while True:
         # player
         player_gravity += 1
         player_rect.y += player_gravity
-        if player_rect.bottom >= 300:
-            player_rect.bottom = 300
-        screen.blit(player_surf, player_rect)
+        if player_rect.bottom >= 300: player_rect.bottom = 300
         player_animation()
+        screen.blit(player_surf, player_rect)
+        player.draw(screen)
+        player.update()
+
 
         # obstacles movement:
         obstacle_rect_list = obstacle_movement(obstacle_rect_list)
