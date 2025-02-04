@@ -24,13 +24,10 @@ TILE_SIZE = 16
 
 tiles = [dirt_image, grass_image]
 
-
-plataform_1 = pygame.Rect(100, 100, 100, 100)
-
 # Maoeamento dos tiles do nosso mapa, depois será usado arquivos de texto.
 game_map = [['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
             ['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
-            ['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
+            ['2','2','2','0','0','0','0','0','0','0','0','0','0','0','0','0','2','2','2'],
             ['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
             ['0','0','0','0','0','0','0','2','2','2','2','2','0','0','0','0','0','0','0'],
             ['0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0','0'],
@@ -54,6 +51,8 @@ def collision_test(rect, tiles):
 def move(rect, movement, tiles):
     collision_types = {'top': False, 'bottom': False, 'right': False, 'left': False}
     
+    # Move o nosso objeto temporariamente para checar se houve colisão horizontal.
+    #   Caso haja colisão, "acopla" os lados que colidiram.
     rect.x += movement[0]
     hit_list = collision_test(rect, tiles)
     for tile in hit_list:
@@ -64,6 +63,7 @@ def move(rect, movement, tiles):
             rect.left = tile.right
             collision_types['left'] = True
     
+    # Anaálogo ao processo explicado acima, porém levando em conta movimentos verticais.
     rect.y += movement[1]
     hit_list = collision_test(rect, tiles)
     for tile in hit_list:
@@ -74,17 +74,23 @@ def move(rect, movement, tiles):
             rect.top = tile.bottom
             collision_types['top'] = True
         
-
+    # Retorna o nosso objeto movido e as colisões que ocorreram.
     return rect, collision_types
 
 moving_right = False
 moving_left = False
 
-player_y_momentum = 0
+player_y_velocity = 0
+player_x_velocity = 4
+
+gravity = 0.8
+
 air_timer = 0
+
 while True:
     display.fill((146, 244, 255))
 
+    # Montando o mapa através dos tiles.
     tile_rects = []
     y = 0
     for row in game_map:
@@ -97,32 +103,31 @@ while True:
         y += 1
     
 
+    # Faz o player "dar a volta" na tela.    
+    if player_rect.x > display.get_width() - 1:
+        player_rect.x = - player_img.get_width() + 1
+    if player_rect.x < - player_img.get_width() - 1:
+        player_rect.x = display.get_width() - 1
     
-    if player_rect.x > display.get_width():
-        player_rect.x = - player_img.get_width()
-    if player_rect.x < - player_img.get_width():
-        player_rect.x = display.get_width()
-    
+    # Inicializa o array de movimentos com 0, 0;
     player_movement = [0, 0]
     
-    if moving_right:
-        player_movement[0] += 2
-    if moving_left:
-        player_movement[0] -= 2
-    player_movement[1] += player_y_momentum
-     
-    if player_y_momentum <= 7:
-        player_y_momentum += 0.5
+    player_movement[0] = (moving_right - moving_left) * player_x_velocity
+    player_movement[1] = player_y_velocity
+    
+    if player_y_velocity <= 7:
+        player_y_velocity += gravity
     
     player_rect, collisions = move(player_rect, player_movement, tile_rects)
+
     if collisions['bottom'] == True:
-        player_y_momentum = 0
+        player_y_velocity = 0
         air_timer = 0
     else:
         air_timer += 1
     
     if collisions['top'] == True:
-        player_y_momentum = 0
+        player_y_velocity = 0
 
 
     display.blit(player_img, (player_rect.x, player_rect.y))
@@ -139,7 +144,8 @@ while True:
                 moving_left = True
             if event.key == pygame.K_UP:
                 if air_timer < 6:
-                    player_y_momentum = -10
+                    player_y_velocity = -15*gravity
+                    air_timer = 10
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_RIGHT:
